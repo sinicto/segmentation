@@ -34,7 +34,7 @@ class Loader(object):
         dev_dict = split_df.filter(pl.col('split') == 'dev').select(self.columns).to_dict()
         test_dict = split_df.filter(pl.col('split') == 'test').select(self.columns).to_dict()
         return (
-            Iterator(train_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers),
-            Iterator(dev_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers),
-            Iterator(test_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers),
+            Iterator(train_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers).iter,
+            Iterator(dev_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers).iter,
+            Iterator(test_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers).iter,
         )
