@@ -61,11 +61,12 @@ class Unet(nn.Module):
         self.enc_modules = []
         self.dec_modules = []
         in_ch = in_channels
+        kf = basic_kf
         for i in range(self.num_modules):
-            kf = basic_kf if i == 0 else 2
             self.enc_modules.append(EncModule(in_ch, kf=kf).to(self.device))
             in_ch *= kf
             self.dec_modules.append(DecModule(in_ch).to(self.device))
+            kf = 2
         
         self.neck = NeckModule(in_ch).to(self.device)
         self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).to(self.device)
