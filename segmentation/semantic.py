@@ -86,7 +86,7 @@ class Unet(nn.Module):
             total_loss = 0
             for batch in loader:
                 optim.zero_grad()
-                y_pred = self.forward(batch['img'])
+                y_pred = self.forward(batch['img']).cuda()
                 y = batch['sem'].to(torch.float).cuda()
                 loss = criterion(y_pred, y)
                 loss.backward()
