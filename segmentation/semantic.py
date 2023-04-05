@@ -53,7 +53,7 @@ class DecModule(nn.Module):
 
 class Unet(nn.Module):
     path = 'unet.txt'
-    device = torch.device('cuda:0')
+    cuda_device = torch.device('cuda:0')
 
     def __init__(self, in_channels=3, out_channels=3, num_modules=4, basic_kf=64):
         super(Unet, self).__init__()
@@ -63,16 +63,16 @@ class Unet(nn.Module):
         in_ch = in_channels
         kf = basic_kf
         for i in range(self.num_modules):
-            self.enc_modules.append(EncModule(in_ch, kf=kf))
+            self.enc_modules.append(EncModule(in_ch, kf=kf).to(self.cuda_device))
             in_ch *= kf
-            self.dec_modules.append(DecModule(in_ch))
+            self.dec_modules.append(DecModule(in_ch).to(self.cuda_device))
             kf = 2
         
-        self.neck = NeckModule(in_ch)
-        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1)
+        self.neck = NeckModule(in_ch).to(self.cuda_device)
+        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).to(self.cuda_device)
 
     def forward(self, x):
-        x = x.to(torch.float).to(self.device)
+        x = x.to(torch.float).to(self.cuda_device)
         for i in range(self.num_modules):
             x = self.enc_modules[i].forward(x)
         x = self.neck.forward(x)
@@ -88,8 +88,8 @@ class Unet(nn.Module):
             total_loss = 0
             for batch in loader:
                 optim.zero_grad()
-                y_pred = self.forward(batch['img']).to(self.device)
-                y = batch['sem'].to(torch.float).to(self.device)
+                y_pred = self.forward(batch['img']).to(self.cuda_device)
+                y = batch['sem'].to(torch.float).to(self.cuda_device)
                 loss = criterion(y_pred, y)
                 loss.backward()
                 optim.step()
@@ -101,7 +101,7 @@ class Unet(nn.Module):
         mse_loss = 0
         for batch in loader:
             y_pred = self.forward(batch['img'])
-            y = batch['sem'].to(self.device)
+            y = batch['sem'].to(self.cuda_device)
             mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
