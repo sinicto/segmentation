@@ -87,7 +87,7 @@ class Unet(nn.Module):
             for batch in loader:
                 optim.zero_grad()
                 y_pred = self.forward(batch['img'])
-                y = batch['sem'].to(torch.float)
+                y = batch['sem'].to(torch.float).cuda()
                 loss = criterion(y_pred, y)
                 loss.backward()
                 optim.step()
@@ -99,7 +99,7 @@ class Unet(nn.Module):
         mse_loss = 0
         for batch in loader:
             y_pred = self.forward(batch['img'])
-            y = batch['sem']
+            y = batch['sem'].cuda()
             mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
