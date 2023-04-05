@@ -53,6 +53,7 @@ class DecModule(nn.Module):
 
 class Unet(nn.Module):
     path = 'unet.txt'
+    device = torch.device('cuda:0')
 
     def __init__(self, in_channels=3, out_channels=3, num_modules=4, basic_kf=64):
         super(Unet, self).__init__()
@@ -62,15 +63,15 @@ class Unet(nn.Module):
         in_ch = in_channels
         for i in range(self.num_modules):
             kf = basic_kf if i == 0 else 2
-            self.enc_modules.append(EncModule(in_ch, kf=kf).cuda())
+            self.enc_modules.append(EncModule(in_ch, kf=kf).to(self.device))
             in_ch *= kf
-            self.dec_modules.append(DecModule(in_ch).cuda())
+            self.dec_modules.append(DecModule(in_ch).to(self.device))
         
-        self.neck = NeckModule(in_ch).cuda()
-        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).cuda()
+        self.neck = NeckModule(in_ch).to(self.device)
+        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).to(self.device)
 
     def forward(self, x):
-        x = x.to(torch.float).cuda()
+        x = x.to(torch.float).to(self.device)
         for i in range(self.num_modules):
             x = self.enc_modules[i].forward(x)
         x = self.neck.forward(x)
@@ -86,8 +87,8 @@ class Unet(nn.Module):
             total_loss = 0
             for batch in loader:
                 optim.zero_grad()
-                y_pred = self.forward(batch['img']).cuda()
-                y = batch['sem'].to(torch.float).cuda()
+                y_pred = self.forward(batch['img']).to(self.device)
+                y = batch['sem'].to(torch.float).to(self.device)
                 loss = criterion(y_pred, y)
                 loss.backward()
                 optim.step()
@@ -98,8 +99,8 @@ class Unet(nn.Module):
         mse = nn.MSELoss()
         mse_loss = 0
         for batch in loader:
-            y_pred = self.forward(batch['img']).cuda()
-            y = batch['sem'].cuda()
+            y_pred = self.forward(batch['img'])
+            y = batch['sem'].to(self.device)
             mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
