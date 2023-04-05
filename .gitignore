@@ -1,1 +1,4 @@
-*.ipynb
+test.*
+data/*
+*.egg-info/
+__pycache__/
