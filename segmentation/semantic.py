@@ -98,7 +98,7 @@ class Unet(nn.Module):
         mse = nn.MSELoss()
         mse_loss = 0
         for batch in loader:
-            y_pred = self.forward(batch['img'])
+            y_pred = self.forward(batch['img']).cuda()
             y = batch['sem'].cuda()
             mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
