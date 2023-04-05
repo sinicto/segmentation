@@ -63,13 +63,13 @@ class Unet(nn.Module):
         in_ch = in_channels
         kf = basic_kf
         for i in range(self.num_modules):
-            self.enc_modules.append(EncModule(in_ch, kf=kf).to(self.device))
+            self.enc_modules.append(EncModule(in_ch, kf=kf))
             in_ch *= kf
-            self.dec_modules.append(DecModule(in_ch).to(self.device))
+            self.dec_modules.append(DecModule(in_ch))
             kf = 2
         
-        self.neck = NeckModule(in_ch).to(self.device)
-        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).to(self.device)
+        self.neck = NeckModule(in_ch)
+        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1)
 
     def forward(self, x):
         x = x.to(torch.float).to(self.device)
