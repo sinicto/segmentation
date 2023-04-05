@@ -63,13 +63,13 @@ class Unet(nn.Module):
         in_ch = in_channels
         kf = basic_kf
         for i in range(self.num_modules):
-            self.enc_modules.append(EncModule(in_ch, kf=kf).to(self.cuda_device))
+            self.enc_modules.append(EncModule(in_ch, kf=kf))
             in_ch *= kf
-            self.dec_modules.append(DecModule(in_ch).to(self.cuda_device))
+            self.dec_modules.append(DecModule(in_ch))
             kf = 2
         
-        self.neck = NeckModule(in_ch).to(self.cuda_device)
-        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).to(self.cuda_device)
+        self.neck = NeckModule(in_ch)
+        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1)
 
     def forward(self, x):
         x = x.to(torch.float).to(self.cuda_device)
@@ -82,7 +82,7 @@ class Unet(nn.Module):
         return x
 
     def fit(self, loader, epoches=100, lr=0.01):
-        criterion = nn.MSELoss()
+        criterion = nn.BCEWithLogitsLoss()
         optim = torch.optim.Adam(self.parameters(), lr=lr)
         for epoch in range(epoches):
             total_loss = 0
