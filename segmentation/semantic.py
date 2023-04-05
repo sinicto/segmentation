@@ -53,7 +53,6 @@ class DecModule(nn.Module):
 
 class Unet(nn.Module):
     path = 'unet.txt'
-    cuda_device = torch.device('cuda:0')
 
     def __init__(self, in_channels=3, out_channels=3, num_modules=4, basic_kf=64):
         super(Unet, self).__init__()
