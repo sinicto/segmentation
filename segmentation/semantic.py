@@ -63,16 +63,16 @@ class Unet(nn.Module):
         in_ch = in_channels
         kf = basic_kf
         for i in range(self.num_modules):
-            self.enc_modules.append(EncModule(in_ch, kf=kf))
+            self.enc_modules.append(EncModule(in_ch, kf=kf).cuda())
             in_ch *= kf
-            self.dec_modules.append(DecModule(in_ch))
+            self.dec_modules.append(DecModule(in_ch).cuda())
             kf = 2
         
-        self.neck = NeckModule(in_ch)
-        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1)
+        self.neck = NeckModule(in_ch).cuda()
+        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).cuda()
 
     def forward(self, x):
-        x = x.to(torch.float).to(self.cuda_device)
+        x = x.to(torch.float).cuda()
         for i in range(self.num_modules):
             x = self.enc_modules[i].forward(x)
         x = self.neck.forward(x)
@@ -88,8 +88,8 @@ class Unet(nn.Module):
             total_loss = 0
             for batch in loader:
                 optim.zero_grad()
-                y_pred = self.forward(batch['img']).to(self.cuda_device)
-                y = batch['sem'].to(torch.float).to(self.cuda_device)
+                y_pred = self.forward(batch['img']).cuda()
+                y = batch['sem'].to(torch.float).cuda()
                 loss = criterion(y_pred, y)
                 loss.backward()
                 optim.step()
@@ -101,7 +101,7 @@ class Unet(nn.Module):
         mse_loss = 0
         for batch in loader:
             y_pred = self.forward(batch['img'])
-            y = batch['sem'].to(self.cuda_device)
+            y = batch['sem'].cuda()
             mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
