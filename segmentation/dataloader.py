@@ -1,4 +1,5 @@
-import polars as pl
+import pandas as pd
+import cv2
 from .Iterator import Iterator
 
 default_data_path = 'data/CVPPPSegmData/'
@@ -9,19 +10,33 @@ class Loader(object):
                  label_type='semantic',
                  split_path=default_split_path,
                  data_path=default_data_path,
-                 batch_size=1,
+                 batch_size=32,
                  shuffle=False,
                  num_workers=1):
-        self.columns = [pl.col('img_path')]
-        if label_type == 'semantic' or label_type == 'any':
-            self.columns.append(pl.col('sem_path'))
-        if label_type == 'instance' or label_type == 'any':
-            self.columns.append(pl.col('inst_path'))
+        if label_type == 'semantic':
+            self.col = 'sem_path'
+        if label_type == 'instance':
+            self.col = 'inst_path'
         self.split_path = split_path
         self.data_path = data_path
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.num_workers = num_workers
+
+    def load_images(self, data, channels):
+        size = 64
+        def load_image(path):
+            img = cv2.imread(self.data_path + path)
+            img = cv2.resize(img, (size, size))
+            if channels == 1:
+                return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).reshape((1, size, size))
+            return img.transpose((2, 0, 1))
+        return [load_image(path) for path in data]
+
+    def get_iter(self, split, images, labels, split_type):
+        x = images[split == split_type]
+        y = labels[split == split_type]
+        return Iterator({'x': x, 'y': y}, self.batch_size, self.shuffle, self.num_workers)
 
     def load_split_data(self):
         """
@@ -29,12 +44,12 @@ class Loader(object):
         Returns:
             train, dev, test: iterators
         """
-        split_df = pl.read_csv(self.split_path)
-        train_dict = split_df.filter(pl.col('split') == 'train').select(self.columns).to_dict()
-        dev_dict = split_df.filter(pl.col('split') == 'dev').select(self.columns).to_dict()
-        test_dict = split_df.filter(pl.col('split') == 'test').select(self.columns).to_dict()
+        split_df = pd.read_csv(self.split_path)
+        images = self.load_images(split_df['img_path'].to_numpy())
+        labels = self.load_images(split_df[self.col].to_numpy())
+        split_types = split_df['split'].to_numpy()
         return (
-            Iterator(train_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers).iter,
-            Iterator(dev_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers).iter,
-            Iterator(test_dict, self.data_path, self.batch_size, self.shuffle, self.num_workers).iter,
+            self.get_iter(split_types, images, labels, 'train'),
+            self.get_iter(split_types, images, labels, 'dev'),
+            self.get_iter(split_types, images, labels, 'test'),
         )

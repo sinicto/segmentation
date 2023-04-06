@@ -56,22 +56,29 @@ class Unet(nn.Module):
 
     def __init__(self, in_channels=3, out_channels=3, num_modules=4, basic_kf=64):
         super(Unet, self).__init__()
+        self.set_device()
         self.num_modules = num_modules
         self.enc_modules = []
         self.dec_modules = []
         in_ch = in_channels
         kf = basic_kf
         for i in range(self.num_modules):
-            self.enc_modules.append(EncModule(in_ch, kf=kf).cuda())
+            self.enc_modules.append(EncModule(in_ch, kf=kf).to(self.device))
             in_ch *= kf
-            self.dec_modules.append(DecModule(in_ch).cuda())
+            self.dec_modules.append(DecModule(in_ch).to(self.device))
             kf = 2
         
-        self.neck = NeckModule(in_ch).cuda()
-        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).cuda()
+        self.neck = NeckModule(in_ch).to(self.device)
+        self.final_conv = nn.Conv2d(in_channels * basic_kf // 2, out_channels, 3, padding=1).to(self.device)
+
+    def set_device(self):
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda:0')
+        else:
+            self.device = torch.device('cpu')
 
     def forward(self, x):
-        x = x.to(torch.float).cuda()
+        x = x.to(torch.float).to(self.device)
         for i in range(self.num_modules):
             x = self.enc_modules[i].forward(x)
         x = self.neck.forward(x)
@@ -87,8 +94,8 @@ class Unet(nn.Module):
             total_loss = 0
             for batch in loader:
                 optim.zero_grad()
-                y_pred = self.forward(batch['img']).cuda()
-                y = batch['sem'].to(torch.float).cuda()
+                y_pred = self.forward(batch['x'])
+                y = batch['y'].to(self.device)
                 loss = criterion(y_pred, y)
                 loss.backward()
                 optim.step()
@@ -99,9 +106,9 @@ class Unet(nn.Module):
         mse = nn.MSELoss()
         mse_loss = 0
         for batch in loader:
-            y_pred = self.forward(batch['img'])
-            y = batch['sem'].cuda()
-            mse_loss += mse(y_pred, y)
+            y_pred = self.forward(batch['x'])
+            y = batch['y'].to(self.device)
+            total_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
     def store(self):
