@@ -1,4 +1,3 @@
-import cv2
 from torch.utils.data import DataLoader, Dataset
 
 class Iterator(Dataset):
@@ -8,7 +7,7 @@ class Iterator(Dataset):
         self.iter = DataLoader(dataset=self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
     def __getitem__(self, index):
-        return {k: self.data_dict[k][index] for k in self.old_keys}
+        return {k: self.data_dict[k][index] for k in self.keys}
 
     def __len__(self):
-        return self.data_dict["img"].shape[0]
+        return self.data_dict["x"].shape[0]
