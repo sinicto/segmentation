@@ -107,7 +107,7 @@ class Unet(nn.Module):
         for batch in loader:
             y_pred = self.forward(batch['x'])
             y = batch['y'].to(self.device)
-            total_loss += mse(y_pred, y)
+            mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
     def store(self):
