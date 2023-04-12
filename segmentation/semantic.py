@@ -110,6 +110,9 @@ class Unet(nn.Module):
             mse_loss += mse(y_pred, y)
         print("MSE loss: {}".format(mse_loss))
 
+    def predict(self, x):
+        return self.forward(torch.tensor([x]))[0] * 255
+
     def store(self):
         torch.save(self.state_dict(), self.path)
 
