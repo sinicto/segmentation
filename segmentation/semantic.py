@@ -96,7 +96,7 @@ class Unet(nn.Module):
                 y_pred = self.forward(batch['x'].to(torch.float))
                 y = batch['y'].to(torch.float).to(self.device)
                 loss = criterion(y, y_pred)
-                print(y.shape, y_pred.shape, loss)
+                print(y, y_pred)
                 loss.backward()
                 optim.step()
                 total_loss += loss
