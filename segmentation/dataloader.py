@@ -31,8 +31,8 @@ class Loader(object):
             img = cv2.resize(img, (size, size))
             if channels == 1:
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY).reshape((1, size, size))
-                print(img)
-                return np.unique(img)
+                print(np.unique(img))
+                return img
             return img.transpose((2, 0, 1))
         return np.vectorize(load_image, signature='()->(n, m, k)')(data)
 
