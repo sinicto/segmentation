@@ -82,7 +82,7 @@ class Unet(nn.Module):
         x = self.neck.forward(x)
         for i in range(self.num_modules - 1, -1, -1):
             x = self.dec_modules[i].forward(x, self.enc_modules[i].out_value)
-        x = F.relu(self.final_conv(x))
+        x = F.sigmoid(self.final_conv(x))
         return x
 
     def fit(self, loader, epoches=100, lr=0.01):
