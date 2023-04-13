@@ -87,6 +87,7 @@ class Unet(nn.Module):
 
     def fit(self, loader, epoches=100, lr=0.01):
         print('='*8, 'TRAINING')
+        self.train()
         criterion = nn.BCEWithLogitsLoss()
         optim = torch.optim.Adam(self.parameters(), lr=lr)
         for epoch in range(epoches):
@@ -102,6 +103,7 @@ class Unet(nn.Module):
             print("Epoch {}: loss {}".format(epoch, total_loss))
 
     def evaluate(self, loader):
+        self.eval()
         mse = nn.MSELoss()
         mse_loss = 0
         for batch in loader:
